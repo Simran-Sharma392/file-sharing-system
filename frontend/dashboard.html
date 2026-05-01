@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>Dashboard</h1>
+
+<div id="senderSection">
+  <h2>Create File (Sender Only)</h2>
+  <input id="file_name" placeholder="File Name"><br><br>
+  <input id="description" placeholder="Description"><br><br>
+  <input id="category" placeholder="Category"><br><br>
+  <input id="expiry" type="datetime-local"><br><br>
+  <button onclick="createFile()">Create File</button>
+</div>
+
+<h2>Choose Dashboard</h2>
+<button onclick="loadSender()">Sender Dashboard</button>
+<button onclick="loadReceiver()">Receiver Dashboard</button>
+<button onclick="logout()">Logout</button>
+
+<ul id="dataList"></ul>
+<p id="msg"></p>
+
+<script>
+const token = localStorage.getItem("token");
+if (!token) {
+  window.location.href = "login.html";
+}
+let payload;
+try {
+  payload = JSON.parse(atob(token.split(".")[1]));
+} catch (err) {
+  alert("Invalid session. Please login again.");
+  localStorage.removeItem("token");
+  window.location.href = "login.html";
+}
+if (payload.role !== "sender") {
+  document.getElementById("senderSection").style.display = "none";
+}
+async function loadSender() {
+  document.getElementById("msg").innerText = "Loading sender data...";
+  try {
+    const res = await fetch("http://localhost:5000/api/my-files", {
+      headers: {
+        "Authorization": "Bearer " + token
+      }
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      document.getElementById("msg").innerText = data.message;
+      return;
+    }
+    showData(data);
+  } catch (err) {
+    document.getElementById("msg").innerText = err.message;
+  }
+}
+async function loadReceiver() {
+  document.getElementById("msg").innerText = "Loading receiver data...";
+  try {
+    const res = await fetch("http://localhost:5000/api/files", {
+      headers: {
+        "Authorization": "Bearer " + token
+      }
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      document.getElementById("msg").innerText = data.message;
+      return;
+    }
+    showData(data);
+  } catch (err) {
+    document.getElementById("msg").innerText = err.message;
+  }
+}
+function showData(data) {
+  const list = document.getElementById("dataList");
+  const msg = document.getElementById("msg");
+  list.innerHTML = "";
+  if (data.length === 0) {
+    msg.innerText = "No files found";
+    return;
+  }
+  msg.innerText = "Data loaded successfully";
+  data.forEach(file => {
+    const li = document.createElement("li");
+    li.innerText =
+      "Name: " + file.file_name +
+      " | Desc: " + file.description +
+      " | Category: " + file.category +
+      " | Expiry: " + file.expiry;
+    li.onclick = () => {
+      alert(
+        "Name: " + file.file_name + "\n" +
+        "Description: " + file.description + "\n" +
+        "Category: " + file.category + "\n" +
+        "Expiry: " + file.expiry
+      );
+    };
+    list.appendChild(li);
+  });
+}
+
+async function createFile() {
+  const file_name = document.getElementById("file_name").value;
+  const description = document.getElementById("description").value;
+  const category = document.getElementById("category").value;
+  const expiry = document.getElementById("expiry").value;
+  document.getElementById("msg").innerText = "Creating file...";
+  try {
+    const res = await fetch("http://localhost:5000/api/files", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({
+        file_name,
+        description,
+        category,
+        expiry
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      document.getElementById("msg").innerText = data.message;
+      return;
+    }
+    document.getElementById("msg").innerText = "File created successfully!";
+
+  } catch (err) {
+    document.getElementById("msg").innerText = "ERROR: " + err.message;
+  }
+}
+function logout() {
+  localStorage.removeItem("token");
+  window.location.href = "login.html";
+}
+</script>
+
+</body>
+</html>

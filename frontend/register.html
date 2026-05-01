@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>Register</h1>
+
+<input id="name" placeholder="Name"><br><br>
+<input id="email" placeholder="Email"><br><br>
+<input id="password" placeholder="Password"><br><br>
+
+<select id="role">
+  <option value="sender">Sender</option>
+  <option value="receiver">Receiver</option>
+</select><br><br>
+
+<p id="msg"></p>
+
+<button onclick="register()">Register</button>
+
+<script>
+async function register() {
+  console.log("BUTTON CLICKED"); 
+  const name = document.getElementById("name").value;
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  const role = document.getElementById("role").value;
+  console.log(name, email, password, role); 
+  try {
+    const res = await fetch("http://localhost:5000/api/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ name, email, password, role })
+    });
+    const data = await res.json();
+    console.log(data);
+    document.getElementById("msg").innerText = data.message || data.error;
+
+  } catch (err) {
+    console.error("FETCH ERROR:", err);
+  }
+}
+</script>
+
+</body>
+</html>
