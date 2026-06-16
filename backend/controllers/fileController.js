@@ -1,7 +1,8 @@
 const db = require("../config/db");
 
 const createFile = (req, res) => {
-  const { file_name, description, category, expiry } = req.body;
+  const { description, category, expiry } = req.body;
+  const file_name = req.file.filename;
   const sender_id = req.user.id;
 
   const sql = `
@@ -13,9 +14,12 @@ const createFile = (req, res) => {
     sql,
     [sender_id, file_name, description, category, expiry],
     (err) => {
-      if (err) return res.status(500).json({ error: err.message });
+      if (err)
+        return res.status(500).json({ error: err.message });
 
-      res.status(201).json({ message: "File metadata created" });
+      res.status(201).json({
+        message: "File metadata created",
+      });
     }
   );
 };

@@ -1,16 +1,25 @@
 const express = require("express");
 const router = express.Router();
+
 const { verifyToken, checkRole } = require("../middleware/auth");
-const { createFile, getAllFiles, getMyFiles } = require("../controllers/fileController");
-/* Sender only */
+const upload = require("../middleware/upload");
+
+const {
+  createFile,
+  getAllFiles,
+  getMyFiles,
+} = require("../controllers/fileController");
+
+/* Sender only - upload file */
 router.post(
   "/files",
   verifyToken,
   checkRole(["sender"]),
+  upload.single("file"),
   createFile
 );
 
-/* Receiver only */
+/* Receiver only - view all files */
 router.get(
   "/files",
   verifyToken,
@@ -18,6 +27,12 @@ router.get(
   getAllFiles
 );
 
-/* Sender dashboard */
-router.get("/my-files", verifyToken, checkRole(["sender"]), getMyFiles);
+/* Sender dashboard - view own uploads */
+router.get(
+  "/my-files",
+  verifyToken,
+  checkRole(["sender"]),
+  getMyFiles
+);
+
 module.exports = router;
