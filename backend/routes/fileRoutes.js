@@ -8,9 +8,10 @@ const {
   createFile,
   getAllFiles,
   getMyFiles,
+  getFileByKey
 } = require("../controllers/fileController");
 
-/* Sender only - upload file */
+//Sender only - upload file 
 router.post(
   "/files",
   verifyToken,
@@ -19,7 +20,7 @@ router.post(
   createFile
 );
 
-/* Receiver only - view all files */
+//Receiver only - view all files 
 router.get(
   "/files",
   verifyToken,
@@ -27,12 +28,18 @@ router.get(
   getAllFiles
 );
 
-/* Sender dashboard - view own uploads */
+//Sender dashboard - view own uploads 
 router.get(
   "/my-files",
   verifyToken,
   checkRole(["sender"]),
   getMyFiles
+);
+
+//Sender and Receiver - view files from file_link
+router.get(
+  "/file/:key",
+  getFileByKey
 );
 
 module.exports = router;

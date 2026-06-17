@@ -1,24 +1,24 @@
 const db = require("../config/db");
-
+const {nanoid}=require("nanoid");
 const createFile = (req, res) => {
   const { description, category, expiry } = req.body;
   const file_name = req.file.filename;
   const sender_id = req.user.id;
-
+  const file_key=nanoid(10);
   const sql = `
-    INSERT INTO files (sender_id, file_name, description, category, expiry)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO files (sender_id, file_name, description, category, expiry, file_key)
+    VALUES (?, ?, ?, ?, ?, ?)
   `;
 
   db.query(
     sql,
-    [sender_id, file_name, description, category, expiry],
+    [sender_id, file_name, description, category, expiry, file_key],
     (err) => {
       if (err)
         return res.status(500).json({ error: err.message });
-
+      const file_link=`http://localhost:5000/api/file/${file_key}`;
       res.status(201).json({
-        message: "File metadata created",
+        message: "File uploaded successfully", file_key, file_link,
       });
     }
   );
@@ -38,7 +38,22 @@ const getAllFiles = (req, res) => {
   });
 };
 
-module.exports = { createFile, getAllFiles };
+const getFileByKey=(req,res)=>{
+  const{key}=req.params;
+  const sql=`SELECT * from files WHERE file_key=?`;
+  db.query(sql, [key], (err, results)=>{
+    if(err) return res.status(500).json({
+      error: err.message,
+    });
+    if(results.lenght === 0){
+      return res.status(404).json({
+        message:"File not found",
+      });
+    }
+    res.json(results[0]);
+  });
+};
+
 const getMyFiles = (req, res) => {
   const sender_id = req.user.id;
 
@@ -52,4 +67,5 @@ const getMyFiles = (req, res) => {
     res.json(results);
   });
 };
-module.exports = { createFile, getAllFiles, getMyFiles };
+
+module.exports = { createFile, getAllFiles, getFileByKey, getMyFiles };
