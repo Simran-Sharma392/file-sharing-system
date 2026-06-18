@@ -50,7 +50,22 @@ const getFileByKey=(req,res)=>{
         message:"File not found",
       });
     }
-    res.json(results[0]);
+    const file=results[0];
+    if(file.status != "ACTIVE"){
+      return res.status(403).json({
+        message:`File is ${file.status.toLowerCase()}`
+      });
+    }
+    const now=new Date();
+    const expiry=new Date(file.expiry);
+    if(now>expiry){
+      const updateSql=`UPDATE files set status='EXPIRED' where id=?`;
+      db.query(updateSql, [file.id]);
+      return res.status(403).json({
+        message:"File has expired",
+      });
+    }
+    res.json(file);
   });
 };
 
