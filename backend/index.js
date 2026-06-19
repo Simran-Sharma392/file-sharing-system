@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-
+const path=require("path");
 const app = express();
 
 require("./config/db");
@@ -10,7 +10,7 @@ const { verifyToken, checkRole } = require("./middleware/auth");
 const fileRoutes = require("./routes/fileRoutes");
 app.use(cors());
 app.use(express.json());
-
+app.use("/uploads", express.static(path.join(__dirname,"uploads")));
 app.use("/api", authRoutes);
 app.use("/api", fileRoutes);
 app.get("/test", (req, res) => {

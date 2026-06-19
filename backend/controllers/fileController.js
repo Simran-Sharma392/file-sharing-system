@@ -48,6 +48,7 @@ const getAllFiles = (req, res) => {
 
 //Get file metadata based on file_key
 const getFileByKey=(req,res)=>{
+
   const{key}=req.params;
   const sql=`SELECT * from files WHERE file_key=?`;
   db.query(sql, [key], (err, results)=>{
@@ -61,9 +62,7 @@ const getFileByKey=(req,res)=>{
     }
     const file=results[0];
 
-
-    const {password}=req.body;
-    
+    const password = req.body?.password;
     if(file.status != "ACTIVE"){
       return res.status(403).json({
         message:`File is ${file.status.toLowerCase()}`
@@ -72,7 +71,6 @@ const getFileByKey=(req,res)=>{
 
     const now=new Date();
     const expiry=new Date(file.expiry);
-
     if(now>expiry){
       const updateSql=`UPDATE files set status='EXPIRED' where id=?`;
       db.query(updateSql, [file.id]);
@@ -93,13 +91,15 @@ const getFileByKey=(req,res)=>{
         });
       }
     }
+    const preview_url=`http://localhost:5000/uploads/${file.file_name}`;
     res.json({
       id: file.id,
       file_name: file.file_name,
       description: file.description,
       category: file.category,
       expiry: file.expiry,
-      status: file.status
+      status: file.status,
+      preview_url
     });
   });
 };
@@ -119,4 +119,22 @@ const getMyFiles = (req, res) => {
   });
 };
 
-module.exports = { createFile, getAllFiles, getFileByKey, getMyFiles };
+//for sender - to revoke uploaded files
+const revokeFile=(req,res)=>{
+  const {id}=req.params;
+  const sender_id=req.user.id;
+  const sql=`
+  UPDATE files set status='REVOKED' where id=? and sender_id=?
+  `;
+  db.query(sql, [id, sender_id], (err, result)=>{
+    if(err){
+      return res.status(500).json({
+        error: err.message
+      });
+    }
+    res.json({
+      message:"File revoked successfully"
+    });
+  });
+}
+module.exports = { createFile, getAllFiles, getFileByKey, getMyFiles, revokeFile };

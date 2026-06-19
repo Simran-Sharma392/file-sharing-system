@@ -8,7 +8,8 @@ const {
   createFile,
   getAllFiles,
   getMyFiles,
-  getFileByKey
+  getFileByKey,
+  revokeFile,
 } = require("../controllers/fileController");
 
 //Sender only - upload file 
@@ -36,8 +37,16 @@ router.get(
   getMyFiles
 );
 
+//Sender - to revoke files
+router.patch(
+  "/files/:id/revoke",
+  verifyToken,
+  checkRole(["sender"]),
+  revokeFile
+);
+
 //Sender and Receiver - view files from file_link
-router.post(
+router.get(
   "/file/:key",
   getFileByKey
 );
