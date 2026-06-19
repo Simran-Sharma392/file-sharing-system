@@ -37,7 +37,7 @@ router.get(
 );
 
 //Sender and Receiver - view files from file_link
-router.get(
+router.post(
   "/file/:key",
   getFileByKey
 );
