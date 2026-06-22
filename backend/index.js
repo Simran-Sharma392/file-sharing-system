@@ -1,4 +1,5 @@
 const express = require("express");
+require("./cron/cleanup");
 const cors = require("cors");
 const path=require("path");
 const app = express();

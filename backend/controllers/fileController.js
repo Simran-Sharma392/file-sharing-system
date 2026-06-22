@@ -92,6 +92,13 @@ const getFileByKey=(req,res)=>{
       }
     }
     const preview_url=`http://localhost:5000/uploads/${file.file_name}`;
+    const ipAddress=req.ip;
+    const logSql=`INSERT into access_logs (file_id, ip_address) values(?,?)`;
+    db.query(logSql, [file.id, ipAddress], (logErr)=>{
+      if(logErr){
+        console.error("Access log failed: ", logErr);
+      }
+    });
     res.json({
       id: file.id,
       file_name: file.file_name,
@@ -101,6 +108,7 @@ const getFileByKey=(req,res)=>{
       status: file.status,
       preview_url
     });
+
   });
 };
 

@@ -17,6 +17,7 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.2.0",
     "mysql2": "^3.16.0",
-    "nanoid": "^5.1.11"
+    "nanoid": "^5.1.11",
+    "node-cron": "^4.5.0"
   }
 }
