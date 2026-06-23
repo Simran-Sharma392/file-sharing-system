@@ -1,3 +1,4 @@
+const path=require("path");
 const db = require("../config/db");
 const {nanoid}=require("nanoid");
 const bcrypt = require("bcrypt");
@@ -145,4 +146,96 @@ const revokeFile=(req,res)=>{
     });
   });
 }
-module.exports = { createFile, getAllFiles, getFileByKey, getMyFiles, revokeFile };
+
+//for receiver - to download uploaded files
+const downloadFile = (req, res) => {
+  const { key } = req.params;
+
+  const sql = `
+    SELECT * FROM files
+    WHERE file_key = ?
+  `;
+
+  db.query(sql, [key], (err, results) => {
+
+    if (err) {
+      return res.status(500).json({
+        error: err.message
+      });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({
+        message: "File not found"
+      });
+    }
+
+    const file = results[0];
+    if (file.download_count >= file.max_downloads) {
+
+    const updateSql = `
+    UPDATE files
+    SET status='EXPIRED'
+    WHERE id=?
+  `;
+
+    db.query(updateSql, [file.id]);
+
+    return res.status(403).json({
+      message: "Download limit reached"
+   });
+  }
+    console.log("Validation passed for:", file.file_name);
+
+    if (file.status !== "ACTIVE") {
+      return res.status(403).json({
+        message: `File is ${file.status.toLowerCase()}`
+      });
+    }
+
+    const now = new Date();
+    const expiry = new Date(file.expiry);
+
+    if (now > expiry) {
+
+      const updateSql = `
+        UPDATE files
+        SET status = 'EXPIRED'
+        WHERE id = ?
+      `;
+
+      db.query(updateSql, [file.id]);
+
+      return res.status(403).json({
+        message: "File has expired"
+      });
+    }
+
+    const countSql = `
+      UPDATE files
+      SET download_count = download_count + 1
+      WHERE id = ?
+    `;
+
+    db.query(countSql, [file.id], (err) => {
+
+      if (err) {
+        return res.status(500).json({
+          error: err.message
+        });
+      }
+
+      const filePath = path.join(
+        __dirname,
+        "..",
+        "uploads",
+        file.file_name
+      );
+
+      res.download(filePath);
+
+    });
+
+  });
+};
+module.exports = { createFile, getAllFiles, getFileByKey, getMyFiles, revokeFile, downloadFile };

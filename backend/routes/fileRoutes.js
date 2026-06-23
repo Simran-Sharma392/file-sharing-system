@@ -10,6 +10,7 @@ const {
   getMyFiles,
   getFileByKey,
   revokeFile,
+  downloadFile,
 } = require("../controllers/fileController");
 
 //Sender only - upload file 
@@ -49,6 +50,12 @@ router.patch(
 router.get(
   "/file/:key",
   getFileByKey
+);
+
+//receiver - download files
+router.get(
+  "/download/:key",
+  downloadFile
 );
 
 module.exports = router;

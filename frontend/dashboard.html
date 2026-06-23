@@ -6,14 +6,20 @@
 
 <div id="senderSection">
   <h2>Create File (Sender Only)</h2>
-  <input id="file_name" placeholder="File Name"><br><br>
+  <input type="file" id="file"><br><br>
   <input id="description" placeholder="Description"><br><br>
   <input id="category" placeholder="Category"><br><br>
+  <input id="password" placeholder="Optional Password"><br><br>
   <input id="expiry" type="datetime-local"><br><br>
-  <button onclick="createFile()">Create File</button>
+  <button onclick="createFile()">Upload File</button>
 </div>
 
 <h2>Choose Dashboard</h2>
+<h2>Acces File</h2>
+<input id="fileKey" placeholder="Enter file key">
+<button onclick="accessFile()"> Access File</button>
+<div id="fileDetails"></div>
+<br>
 <button onclick="loadSender()">Sender Dashboard</button>
 <button onclick="loadReceiver()">Receiver Dashboard</button>
 <button onclick="logout()">Logout</button>
@@ -102,39 +108,123 @@ function showData(data) {
 }
 
 async function createFile() {
-  const file_name = document.getElementById("file_name").value;
+
+  const file = document.getElementById("file").files[0];
   const description = document.getElementById("description").value;
   const category = document.getElementById("category").value;
+  const password = document.getElementById("password").value;
   const expiry = document.getElementById("expiry").value;
-  document.getElementById("msg").innerText = "Creating file...";
+
+  if (!file) {
+    document.getElementById("msg").innerText = "Please select a file";
+    return;
+  }
+
+  document.getElementById("msg").innerText = "Uploading file...";
+
+  const formData = new FormData();
+
+  formData.append("file", file);
+  formData.append("description", description);
+  formData.append("category", category);
+  formData.append("expiry", expiry);
+  formData.append("password", password);
+
   try {
-    const res = await fetch("http://localhost:5000/api/files", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token
-      },
-      body: JSON.stringify({
-        file_name,
-        description,
-        category,
-        expiry
-      })
-    });
+
+    const res = await fetch(
+      "http://localhost:5000/api/files",
+      {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + token
+        },
+        body: formData
+      }
+    );
+
     const data = await res.json();
+
     if (!res.ok) {
-      document.getElementById("msg").innerText = data.message;
+      document.getElementById("msg").innerText =
+        data.message || data.error;
       return;
     }
-    document.getElementById("msg").innerText = "File created successfully!";
+
+    document.getElementById("msg").innerText =
+      "File uploaded successfully!";
+
+    console.log(data);
 
   } catch (err) {
-    document.getElementById("msg").innerText = "ERROR: " + err.message;
+
+    document.getElementById("msg").innerText =
+      "ERROR: " + err.message;
+
   }
 }
+
 function logout() {
   localStorage.removeItem("token");
   window.location.href = "login.html";
+}
+
+async function accessFile() {
+
+  const key = document.getElementById("fileKey").value;
+
+  if (!key) {
+    document.getElementById("msg").innerText =
+      "Enter a file key";
+    return;
+  }
+
+  try {
+
+    const res = await fetch(
+      `http://localhost:5000/api/file/${key}`
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      document.getElementById("msg").innerText =
+        data.message;
+      return;
+    }
+
+    document.getElementById("fileDetails").innerHTML = `
+      <h3>${data.file_name}</h3>
+
+      <p>Description: ${data.description}</p>
+
+      <p>Category: ${data.category}</p>
+
+      <p>Status: ${data.status}</p>
+
+      <img
+        src="${data.preview_url}"
+        width="300"
+        alt="Preview"
+      >
+
+      <br><br>
+
+      <button onclick="downloadFile('${key}')">
+        Download
+      </button>
+    `;
+
+  } catch (err) {
+
+    document.getElementById("msg").innerText =
+      err.message;
+
+  }
+}
+
+function downloadFile(key){
+  window.open(`http://localhost:5000/api/download/${key}`,"_blank");
 }
 </script>
 
